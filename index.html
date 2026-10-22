@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10243E">
+<title>Campus Hub – Events & Lost-Found Portal</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#events"><span class="logo">🎓</span>Campus Hub</a>
+  <nav id="nav" aria-label="Main">
+    <button data-view="events"><span class="ic">📅</span><span>Events</span></button>
+    <button data-view="items"><span class="ic">🔎</span><span>Lost &amp; Found</span></button>
+    <button data-view="mine" data-auth><span class="ic">👤</span><span>My activity</span></button>
+    <button data-view="admin" data-admin><span class="ic">🛡️</span><span>Admin</span></button>
+  </nav>
+  <div class="right"><button class="icon" id="theme" aria-label="Toggle dark mode">🌙</button><div id="authbox"></div></div>
+</header>
+
+<main>
+  <section id="events" class="view">
+    <div class="hero">
+      <div>
+        <h1>What’s on. What’s lost. All in one place.</h1>
+        <p>RSVP to campus events, report lost items, and get them back through a verified claim.</p>
+        <div class="row"><button class="btn" data-go="items">Browse lost &amp; found</button><button class="btn light" id="heroAdd">Report an item</button></div>
+      </div>
+      <div class="hstats" id="hstats"></div>
+    </div>
+    <div class="split">
+      <div class="cal card">
+        <div class="calhead"><button id="prev" aria-label="Previous month">‹</button><h2 id="calTitle"></h2><button id="next" aria-label="Next month">›</button></div>
+        <div id="calGrid" class="grid"></div>
+        <p class="hint">A dot means an event is scheduled. Tap a date to filter.</p>
+      </div>
+      <div>
+        <div class="bar"><h2 class="h">Upcoming events</h2><button class="btn" id="addEvent" data-admin>+ New event</button></div>
+        <div id="chips" class="chips"></div>
+        <div id="eventList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="items" class="view" hidden>
+    <div class="bar"><h1>Lost &amp; Found registry</h1><button class="btn" id="addItem">+ Report an item</button></div>
+    <div class="filters">
+      <input id="q" type="search" placeholder="Search items…" aria-label="Search items">
+      <select id="fType" aria-label="Type"><option value="">Lost + Found</option><option>Lost</option><option>Found</option></select>
+      <select id="fLoc" aria-label="Location"></select>
+      <select id="fStatus" aria-label="Status"><option value="">Any status</option><option value="open">Open</option><option value="returned">Returned</option></select>
+    </div>
+    <p class="hint" id="count"></p>
+    <div id="itemGrid" class="cards"></div>
+  </section>
+
+  <section id="mine" class="view" hidden></section>
+  <section id="admin" class="view" hidden></section>
+</main>
+
+<dialog id="authDlg"><form id="authForm" novalidate>
+  <h2 id="authTitle">Log in</h2>
+  <label data-reg>Full name<input name="name" autocomplete="name"></label>
+  <label>College email<input name="email" type="email" autocomplete="email" inputmode="email"></label>
+  <label>Password<input name="password" type="password" autocomplete="current-password"></label>
+  <p class="err" id="authErr" role="alert"></p>
+  <div class="row"><button class="btn" type="submit">Continue</button><button class="ghost" type="button" id="swapAuth">Create an account</button><button class="ghost" type="button" data-close>Cancel</button></div>
+  <p class="hint">Demo admin: admin@lpu.in / admin123</p>
+</form></dialog>
+
+<dialog id="itemDlg"><form id="itemForm" novalidate>
+  <h2>Report an item</h2>
+  <div class="row2">
+    <label>Type<select name="type"><option>Lost</option><option>Found</option></select></label>
+    <label>Category<select name="cat"><option>ID / Cards</option><option>Electronics</option><option>Bags</option><option>Keys</option><option>Books</option><option>Other</option></select></label>
+  </div>
+  <label>Item name<input name="title" placeholder="e.g. Black earbuds case" maxlength="60"></label>
+  <div class="row2">
+    <label>Location<select name="loc"></select></label>
+    <label>Date<input name="date" type="date"></label>
+  </div>
+  <label>Description<textarea name="desc" rows="3" maxlength="300" placeholder="Colour, brand, marks. Keep one detail private to verify the owner."></textarea></label>
+  <label>Photo (optional)<input name="photo" type="file" accept="image/*"></label>
+  <img id="prev-img" alt="Selected photo preview" hidden>
+  <p class="err" id="itemErr" role="alert"></p>
+  <div class="row"><button class="btn" type="submit">Post item</button><button class="ghost" type="button" data-close>Cancel</button></div>
+</form></dialog>
+
+<dialog id="claimDlg"><form id="claimForm" novalidate>
+  <h2 id="claimTitle">Claim this item</h2>
+  <p class="hint">Describe something only the owner would know (a sticker, contents, lock-screen, serial number). The poster reviews your answer.</p>
+  <label>Proof of ownership<textarea name="proof" rows="4" maxlength="300"></textarea></label>
+  <p class="err" id="claimErr" role="alert"></p>
+  <div class="row"><button class="btn" type="submit">Send claim</button><button class="ghost" type="button" data-close>Cancel</button></div>
+</form></dialog>
+
+<dialog id="eventDlg"><form id="eventForm" novalidate>
+  <h2>New event</h2>
+  <label>Title<input name="title" maxlength="70"></label>
+  <div class="row2"><label>Date<input name="date" type="date"></label><label>Time<input name="time" type="time"></label></div>
+  <div class="row2"><label>Venue<input name="venue" maxlength="60"></label><label>Category<select name="cat"></select></label></div>
+  <label>Details<textarea name="desc" rows="3" maxlength="300"></textarea></label>
+  <p class="err" id="eventErr" role="alert"></p>
+  <div class="row"><button class="btn" type="submit">Publish event</button><button class="ghost" type="button" data-close>Cancel</button></div>
+</form></dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
