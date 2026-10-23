@@ -15,7 +15,8 @@ button{font-family:inherit;color:inherit}
 .i{width:1.1em;height:1.1em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.17em}
 [hidden]{display:none!important}
 /* ===== Header ===== */
-.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;height:var(--hh);padding:0 clamp(12px,3vw,28px);padding-top:env(safe-area-inset-top);box-sizing:content-box;background:var(--glass);-webkit-backdrop-filter:saturate(1.5) blur(16px);backdrop-filter:saturate(1.5) blur(16px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;height:var(--hh);padding:0 clamp(12px,3vw,28px);padding-top:env(safe-area-inset-top);box-sizing:content-box}
+.top::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--glass);-webkit-backdrop-filter:saturate(1.5) blur(16px);backdrop-filter:saturate(1.5) blur(16px);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-size:1.25rem;font-weight:800;white-space:nowrap;min-width:0}
 .logo{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#ff8a5c);color:#fff;box-shadow:0 4px 12px rgba(242,92,42,.35)}
 .logo .i{width:20px;height:20px}
@@ -144,25 +145,31 @@ dialog form{display:flex;flex-direction:column;gap:12px;padding:22px}
 @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes sheet{from{opacity:.6;transform:translateY(40px)}to{opacity:1;transform:none}}
 @media(hover:hover){.tag:hover{border-color:var(--c);box-shadow:0 10px 30px rgba(15,30,54,.14)}.ev:hover{border-color:color-mix(in srgb,var(--c) 55%,var(--line))}.chips button:hover:not(.on),.grid button:hover:not(.sel){background:color-mix(in srgb,var(--ink) 7%,transparent)}}
-/* ===== Responsive ===== */
-@media(max-width:1000px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.filters #q{grid-column:1/-1}}
-@media(max-width:860px){
+/* ===== Responsive: desktop >900 | tablet 721-900 | phone <=720 | small <=480 | tiny <=360 | landscape ===== */
+@media(min-width:1400px){main,.sitefoot{max-width:1240px}.split{grid-template-columns:340px minmax(0,1fr)}}
+@media(max-width:1000px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.filters #q{grid-column:1/-1}.split{grid-template-columns:290px minmax(0,1fr);gap:18px}}
+@media(max-width:900px){
   .split,.hero{grid-template-columns:minmax(0,1fr)}
-  .cal{position:static;padding:12px 16px}.calToggle{display:flex}.calbody{display:none;padding-top:10px}.cal.open .calbody{display:block}
+  .cal{position:static;padding:12px 16px}
+  .calToggle{display:flex}.calbody{display:none;padding-top:10px}.cal.open .calbody{display:block}
   #calMini{margin-left:auto;color:var(--mute);font-size:.85rem;font-weight:400}
   .charts{grid-template-columns:minmax(0,1fr)}
+  #nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;padding:6px max(8px,calc((100vw - 560px)/2)) calc(6px + env(safe-area-inset-bottom));background:var(--glass);-webkit-backdrop-filter:saturate(1.5) blur(16px);backdrop-filter:saturate(1.5) blur(16px);border-top:1px solid var(--line)}
+  #nav button{flex-direction:column;justify-content:center;gap:2px;min-height:52px;padding:6px 2px;border-radius:12px;font-size:.72rem}
+  #nav button .i{display:block;width:22px;height:22px}
+  #nav button.on{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+  #nav .bd{position:absolute;top:3px;left:calc(50% + 6px)}
+  .sitefoot{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+  .fab{display:grid;place-items:center;position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:25;width:54px;height:54px;border:0;border-radius:18px;background:var(--accent);color:#fff;box-shadow:0 10px 26px rgba(242,92,42,.45);cursor:pointer}
+  .fab .i{width:26px;height:26px;stroke-width:2.4}
+  #toast{bottom:calc(88px + env(safe-area-inset-bottom))}
 }
 @media(max-width:720px){
   :root{--hh:56px}
   body{font-size:15px}
   .top{gap:8px}.brand{font-size:1.12rem}.logo{width:32px;height:32px}
-  #nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--glass);-webkit-backdrop-filter:saturate(1.5) blur(16px);backdrop-filter:saturate(1.5) blur(16px);border-top:1px solid var(--line)}
-  #nav button{flex-direction:column;justify-content:center;gap:2px;min-height:52px;padding:6px 2px;border-radius:12px;font-size:.7rem}
-  #nav button .i{display:block;width:22px;height:22px}
-  #nav button.on{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
-  #nav .bd{position:absolute;top:3px;left:calc(50% + 6px)}
   main{padding:14px 12px 24px}
-  .sitefoot{padding-bottom:calc(92px + env(safe-area-inset-bottom));flex-direction:column;align-items:flex-start}
+  .sitefoot{flex-direction:column;align-items:flex-start}
   h1{font-size:1.45rem}
   .hero{gap:16px;margin-bottom:16px;padding:20px 18px;border-radius:18px}.hero p{margin:8px 0 14px;font-size:.92rem}
   .hero .row .btn{flex:1 1 140px}
@@ -178,13 +185,28 @@ dialog form{display:flex;flex-direction:column;gap:12px;padding:22px}
   .row2{grid-template-columns:minmax(0,1fr)}
   .br{grid-template-columns:78px minmax(0,1fr) 22px}
   input,select,textarea{font-size:16px}
-  .fab{display:grid;place-items:center;position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:25;width:54px;height:54px;border:0;border-radius:18px;background:var(--accent);color:#fff;box-shadow:0 10px 26px rgba(242,92,42,.45);cursor:pointer}
-  .fab .i{width:26px;height:26px;stroke-width:2.4}
-  #toast{bottom:calc(88px + env(safe-area-inset-bottom))}
   dialog{width:100%;max-width:100%;margin:auto 0 0;border-radius:22px 22px 0 0;max-height:92dvh}
   dialog[open]{animation:sheet .26s ease}
   dialog::before{content:"";display:block;width:42px;height:4px;margin:8px auto 0;border-radius:9px;background:var(--line)}
   dialog form{padding:16px 18px calc(18px + env(safe-area-inset-bottom))}
 }
-@media(max-width:360px){.cards{grid-template-columns:minmax(0,1fr)}.bt{display:none}.hstats strong{font-size:1.2rem}}
+@media(max-width:480px){
+  .hero .row .btn{flex-basis:100%}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .iv .pad{padding:16px}
+}
+@media(max-width:360px){
+  .cards{grid-template-columns:minmax(0,1fr)}
+  .bt{display:none}
+  .hstats strong{font-size:1.2rem}.hstats div{font-size:.72rem}
+  .ev{grid-template-columns:48px minmax(0,1fr)}.dt{height:54px}
+}
+@media(max-height:500px) and (orientation:landscape){
+  :root{--hh:48px}
+  #nav button{flex-direction:row;min-height:40px;gap:6px;font-size:.78rem}
+  #nav button .i{width:18px;height:18px}
+  .fab{width:46px;height:46px;bottom:calc(62px + env(safe-area-inset-bottom))}
+  dialog{max-height:96dvh}
+  .hero{padding:14px 18px}
+}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
