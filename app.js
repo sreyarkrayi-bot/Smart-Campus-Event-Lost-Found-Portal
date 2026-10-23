@@ -15,7 +15,9 @@ const LOCS=['Library','Block 34','Block 32','Unipolis','Food Court','Hostel Area
 const ICATS=['ID / Cards','Electronics','Bags','Keys','Books','Other'];
 const CATS={Tech:'#3b6cf2',Cultural:'#d63f8c',Academic:'#7a4fd6',Sports:'#1f9d55',Career:'#d98a00',Social:'#0F8B8D',Other:'#6b7a8c'};
 const CEM={Tech:'💻',Cultural:'🎭',Academic:'📚',Sports:'⚽',Career:'💼',Social:'🎉',Other:'📌'};
-async function hash(p){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('campushub|'+p));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch{return btoa(p)}}
+const b64=s=>{try{return btoa(s)}catch{return null}};
+function weak(p){let a=0x811c9dc5;for(const ch of 'campushub|'+p){a^=ch.codePointAt(0);a=Math.imul(a,16777619)>>>0}return 'w'+a.toString(16)}
+async function hash(p){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('campushub|'+p));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch{return weak(p)}}
 
 /* ---------- Generated item illustrations (no external images needed) ---------- */
 const KW=[[/bottle|flask/i,'🍶'],[/calc/i,'🧮'],[/key/i,'🔑'],[/wallet/i,'👛'],[/airdop|earbud|headphone|boat/i,'🎧'],[/bag|backpack/i,'🎒'],[/\bid\b|card|lanyard/i,'🪪'],[/book|textbook/i,'📘'],[/phone/i,'📱'],[/umbrella/i,'☂️'],[/laptop|charger/i,'🔌'],[/watch/i,'⌚'],[/glasses|spectacle/i,'👓'],[/hoodie|jacket/i,'🧥'],[/pen ?drive|usb/i,'💾']];
@@ -137,13 +139,14 @@ $('#authForm').onsubmit=async e=>{
     if(users.some(u=>u.email===f.email))return err('This email is already registered. Log in instead.');
     me={id:uid(),name:f.name.trim(),email:f.email,pw:h,role:'student'};users.push(me);
   }else{
-    const u=users.find(u=>u.email===f.email&&(u.pw===h||u.pw===btoa(f.password)));
+    const u=users.find(u=>u.email===f.email&&(u.pw===h||u.pw===b64(f.password)));
     if(!u)return err('Email or password is wrong.');
     u.pw=h;me=u;
   }
-  save();$('#authDlg').close();toast('Welcome, '+me.name.split(' ')[0]);render();
+  save();$('#authDlg').close();toast('Welcome, '+me.name.split(' ')[0]);render();if(resume){const r=resume;resume=null;setTimeout(r,250)}
 };
-const needLogin=()=>{if(me)return true;toast('Log in to continue');openAuth();return false};
+let resume=null;
+const needLogin=fn=>{if(me)return true;resume=fn||null;toast('Log in to continue');openAuth();return false};
 
 /* ================= Global clicks ================= */
 function openMenu(){const m=$('#menu');if(!m.hidden){m.hidden=true;return}
@@ -168,6 +171,7 @@ document.addEventListener('click',e=>{
 $$('dialog').forEach(dlg=>dlg.addEventListener('close',()=>{
   const f=$('form',dlg);f&&f.reset();$$('.err',dlg).forEach(p=>p.textContent='');
   if(dlg.id==='itemDlg'){photoData='';$('#prev-img').hidden=true}
+  if(dlg.id==='authDlg'&&!me)resume=null;
 }));
 
 /* ================= Events + RSVP calendar ================= */
@@ -191,8 +195,8 @@ function renderEvents(){
   for(let d=1;d<=days;d++){const ds=`${y}-${pad(m+1)}-${pad(d)}`;
     h+=`<button data-d="${ds}" aria-label="${fmtDate(ds)}" class="${events.some(x=>x.date===ds)?'has ':''}${ds===t?'today ':''}${ds===selDate?'sel':''}">${d}</button>`}
   $('#calGrid').innerHTML=h;
-  const q=evText.toLowerCase();
-  const list=events.filter(e=>(selDate?e.date===selDate:e.date>=t)&&(!selCat||evCat(e)===selCat)&&(e.title+' '+e.venue+' '+e.desc).toLowerCase().includes(q)).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  const q=evText.toLowerCase(),showAll=!up.length;
+  const list=events.filter(e=>(selDate?e.date===selDate:(showAll||e.date>=t))&&(!selCat||evCat(e)===selCat)&&(e.title+' '+e.venue+' '+e.desc).toLowerCase().includes(q)).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
   let lastM='',out='';
   list.forEach(e=>{
     const mo=e.date.slice(0,7);if(!selDate&&mo!==lastM){lastM=mo;out+=`<h3 class="mh">${new Date(e.date+'T00:00').toLocaleString('en',{month:'long',year:'numeric'})}</h3>`}
@@ -205,6 +209,14 @@ function renderEvents(){
   });
   $('#eventList').innerHTML=out||`<p class="card empty">${selDate?'No events on this date.':'No events match.'} <a href="#events" id="clr">Clear filters</a></p>`;
 }
+function rsvp(id){
+  if(!needLogin(()=>rsvp(id)))return;
+  const ev=events.find(x=>x.id===id);if(!ev)return;
+  if(ev.date<today())return toast('This event has already ended');
+  const i=ev.rsvps.indexOf(me.id);
+  if(i<0&&ev.cap&&going(ev)>=ev.cap)return toast('Sorry, this event is full');
+  i<0?ev.rsvps.push(me.id):ev.rsvps.splice(i,1);save();toast(i<0?'RSVP confirmed':'RSVP cancelled');renderEvents();
+}
 $('#prev').onclick=()=>{cal.setMonth(cal.getMonth()-1);renderEvents()};
 $('#next').onclick=()=>{cal.setMonth(cal.getMonth()+1);renderEvents()};
 $('#calToggle').onclick=()=>{const c=$('#cal');c.classList.toggle('open');$('#calToggle').setAttribute('aria-expanded',c.classList.contains('open'))};
@@ -214,9 +226,7 @@ $('#evq').oninput=e=>{evText=e.target.value.trim();renderEvents()};
 $('#eventList').onclick=e=>{
   const b=e.target.closest('button'),d=b?b.dataset:{};
   if(e.target.id==='clr'){e.preventDefault();selDate=selCat=evText='';$('#evq').value='';return renderEvents()}
-  if(d.rsvp&&needLogin()){const ev=events.find(x=>x.id===d.rsvp),i=ev.rsvps.indexOf(me.id);
-    if(i<0&&ev.cap&&going(ev)>=ev.cap)return toast('Sorry, this event is full');
-    i<0?ev.rsvps.push(me.id):ev.rsvps.splice(i,1);save();toast(i<0?'RSVP confirmed 🎉':'RSVP cancelled');renderEvents()}
+  if(d.rsvp)return rsvp(d.rsvp);
   if(d.delev&&confirm('Delete this event?')){events=events.filter(x=>x.id!==d.delev);save();renderEvents()}
   if(d.ics){const ev=events.find(x=>x.id===d.ics),c=s=>String(s).replace(/[\r\n,;]/g,' ');
     const txt=['BEGIN:VCALENDAR','VERSION:2.0','BEGIN:VEVENT',`UID:${ev.id}@campushub`,`DTSTART:${ev.date.replace(/-/g,'')}T${ev.time.replace(':','')}00`,`SUMMARY:${c(ev.title)}`,`LOCATION:${c(ev.venue)}`,`DESCRIPTION:${c(ev.desc)}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
@@ -256,7 +266,7 @@ function renderItems(){
 $('#seg').onclick=e=>{if(e.target.dataset.t!==undefined){segT=e.target.dataset.t;renderItems()}};
 ['q','fCat','fLoc','fStatus','fSort'].forEach(id=>$('#'+id).addEventListener('input',renderItems));
 $('#itemGrid').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset.open){e.preventDefault();showItem(e.target.dataset.open)}});
-const openItem=()=>{if(!needLogin())return;$('#itemForm [name=date]').max=today();$('#itemDlg').showModal()};
+const openItem=()=>{if(!needLogin(openItem))return;$('#itemForm [name=date]').max=today();$('#itemDlg').showModal()};
 $('#addItem').onclick=openItem;$('#heroAdd').onclick=openItem;$('#fab').onclick=openItem;
 
 /* ---------- Item detail + possible matches ---------- */
@@ -276,14 +286,14 @@ function showItem(id){
   <h2>${esc(it.title)}</h2><p style="margin:0">${esc(it.desc)}</p>
   <ul class="tl"><li>${it.type==='Lost'?'Lost':'Found'} on ${fmtDate(it.date)}</li><li>Posted by ${esc(it.byName)}</li><li>${nc} claim${nc===1?'':'s'} so far${it.status==='returned'?' · returned to owner':''}</li></ul>
   ${mt.length?`<div><strong>Possible matches</strong><div class="mt" style="margin-top:8px">${mt.map(m=>`<button data-open="${m.id}"><img src="${pic(m)}" alt=""><span>${esc(m.title)}<br><small>${m.type} · ${esc(m.loc)}</small></span></button>`).join('')}</div></div>`:''}
-  <div class="row">${act}<button class="ghost" data-share="${id}">${IC.share} Share</button>${mine&&it.status!=='returned'?`<button class="ghost" data-delmine="${id}">Delete</button>`:''}<button class="ghost" data-close>Close</button></div></div>`;
+  <div class="row">${act}<button class="ghost" data-share="${id}">${IC.share} Share</button>${(mine||isAdmin())?`<button class="ghost" data-delmine="${id}">Delete</button>`:''}<button class="ghost" data-close>Close</button></div></div>`;
   if(!$('#viewDlg').open)$('#viewDlg').showModal();$('#viewDlg').scrollTop=0;
 }
 async function share(id){
   const it=items.find(i=>i.id===id),url=location.href.split('#')[0]+'#item-'+id,text=`${it.type}: ${it.title} at ${it.loc}`;
   try{if(navigator.share)return await navigator.share({title:'Campus Hub',text,url});await navigator.clipboard.writeText(url);toast('Link copied')}catch{if(!navigator.share)toast('Could not copy link')}
 }
-function delItem(id){if(!confirm('Delete your post and its claims?'))return;items=items.filter(i=>i.id!==id);claims=claims.filter(c=>c.itemId!==id);save();$('#viewDlg').close();toast('Post deleted');render()}
+function delItem(id){const it=items.find(x=>x.id===id);if(!it||!me||!(isAdmin()||it.by===me.id))return;if(!confirm('Delete this post and its claims?'))return;items=items.filter(i=>i.id!==id);claims=claims.filter(c=>c.itemId!==id);save();$('#viewDlg').close();toast('Post deleted');render()}
 
 /* ---------- Photo upload + new item ---------- */
 let photoData='';
@@ -308,7 +318,10 @@ $('#itemForm').onsubmit=e=>{
 
 /* ---------- Claims ---------- */
 let claimFor=null;
-function claimItem(id){if(!needLogin())return;claimFor=id;const it=items.find(i=>i.id===id);if(!it)return;
+function claimItem(id){if(!needLogin(()=>claimItem(id)))return;const it=items.find(i=>i.id===id);if(!it)return;
+  if(it.status==='returned')return toast('This item is already returned');
+  if(it.by===me.id)return toast('This is your own post');
+  claimFor=id;
   $('#viewDlg').close();$('#claimTitle').textContent=(it.type==='Found'?'Claim: ':'I found: ')+it.title;$('#claimDlg').showModal()}
 $('#claimForm').onsubmit=e=>{
   e.preventDefault();const p=new FormData(e.target).get('proof').trim();
@@ -321,7 +334,8 @@ $('#claimForm').onsubmit=e=>{
 function decide(id,ok){
   const c=claims.find(x=>x.id===id);if(!c||c.status!=='pending')return;
   const it=items.find(i=>i.id===c.itemId);
-  if(!isAdmin()&&(!it||it.by!==me.id))return toast('Only the poster or an admin can decide.');
+  if(!it)return toast('This item no longer exists');
+  if(!isAdmin()&&it.by!==me.id)return toast('Only the poster or an admin can decide.');
   c.status=ok?'approved':'rejected';
   if(ok){it.status='returned';claims.filter(x=>x.itemId===c.itemId&&x.id!==id&&x.status==='pending').forEach(x=>x.status='rejected')}
   save();toast(ok?'Claim approved. Item marked returned.':'Claim rejected');render();
@@ -370,5 +384,6 @@ $('#devBody').innerHTML=`<div class="dav" aria-hidden="true">${esc(DEV.name[0])}
 <div class="links">${DEV.github?`<a class="ghost" href="${esc(DEV.github)}" target="_blank" rel="noopener">GitHub</a>`:''}${DEV.linkedin?`<a class="ghost" href="${esc(DEV.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`:''}${DEV.email?`<a class="ghost" href="mailto:${esc(DEV.email)}">Email</a>`:''}<button class="ghost" data-close>Close</button></div>`;
 $('#devBtn').onclick=()=>$('#devDlg').showModal();
 
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#menu').hidden=true});
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 go(location.hash.slice(1)||'events');
