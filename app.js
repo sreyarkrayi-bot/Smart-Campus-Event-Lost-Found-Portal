@@ -9,6 +9,8 @@ const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; //
 const today=()=>iso(new Date());
 const fmtDate=d=>new Date(d+'T00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
 const fmtTime=t=>{const[h,m]=t.split(':').map(Number);return `${h%12||12}:${pad(m)} ${h<12?'AM':'PM'}`};
+const svg=p=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+const IC={pin:svg('<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>'),clock:svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),dl:svg('<path d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/>'),share:svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>'),sun:svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),moon:svg('<path d="M21 13.5A8.5 8.5 0 1 1 10.5 3 6.7 6.7 0 0 0 21 13.5z"/>')};
 const LOCS=['Library','Block 34','Block 32','Unipolis','Food Court','Hostel Area','Sports Complex','Main Gate','Other'];
 const ICATS=['ID / Cards','Electronics','Bags','Keys','Books','Other'];
 const CATS={Tech:'#3b6cf2',Cultural:'#d63f8c',Academic:'#7a4fd6',Sports:'#1f9d55',Career:'#d98a00',Social:'#0F8B8D',Other:'#6b7a8c'};
@@ -91,7 +93,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');cl
 const isAdmin=()=>me&&me.role==='admin';
 
 /* ================= Theme ================= */
-function setTheme(t){document.documentElement.dataset.theme=t;$('#theme').textContent=t==='dark'?'☀️':'🌙';store.set('theme',t)}
+function setTheme(t){document.documentElement.dataset.theme=t;$('#theme').innerHTML=t==='dark'?IC.sun:IC.moon;store.set('theme',t)}
 setTheme(store.get('theme',matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
 $('#theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
 
@@ -104,7 +106,7 @@ function go(v){
   if(v==='admin'&&!isAdmin())v='events';
   view=v;if(location.hash.slice(1)!==v&&!pendingItem)location.hash=v;
   $$('.view').forEach(s=>s.hidden=s.id!==v);
-  $('#menu').hidden=true;render();scrollTo({top:0});
+  $('#menu').hidden=true;render();scrollTo(0,0);const sv=$('#'+v);sv.classList.remove('in');void sv.offsetWidth;sv.classList.add('in');
   if(pendingItem){const id=pendingItem;pendingItem=null;showItem(id)}
 }
 function pendingCount(){if(!me)return 0;return claims.filter(c=>c.status==='pending'&&(isAdmin()||items.some(i=>i.id===c.itemId&&i.by===me.id))).length}
@@ -195,11 +197,11 @@ function renderEvents(){
   list.forEach(e=>{
     const mo=e.date.slice(0,7);if(!selDate&&mo!==lastM){lastM=mo;out+=`<h3 class="mh">${new Date(e.date+'T00:00').toLocaleString('en',{month:'long',year:'numeric'})}</h3>`}
     const c=evCat(e),past=e.date<t,mine=me&&e.rsvps.includes(me.id),n=going(e),full=e.cap&&n>=e.cap,w=when(e.date);
-    out+=`<article class="ev ${past?'past':''}" style="--c:${CATS[c]}"><div class="cv" aria-hidden="true">${e.em||CEM[c]}</div>
-    <div><div class="meta"><span class="pill">${c}</span>${w?`<span class="pill when">${w}</span>`:''}${full&&!mine?'<span class="pill s-rejected">Full</span>':''}</div>
-    <h3>${esc(e.title)}</h3><p>📅 ${fmtDate(e.date)} · 🕒 ${fmtTime(e.time)}</p><p>📍 ${esc(e.venue)}</p><p>${esc(e.desc)}</p>
-    ${e.cap?`<div class="cap" title="${n} of ${e.cap}"><i style="width:${Math.min(100,n/e.cap*100)}%"></i></div>`:''}</div>
-    <div class="act"><span>${n}${e.cap?' / '+e.cap:''} going</span><div class="row">${past?'':`<button class="btn sm ${mine?'dark':''}" data-rsvp="${e.id}" ${full&&!mine?'disabled':''}>${mine?'Cancel RSVP':full?'Full':'RSVP'}</button>`}<button class="ghost" data-ics="${e.id}" title="Add to your calendar">📥 Calendar</button>${isAdmin()?`<button class="ghost" data-delev="${e.id}">Delete</button>`:''}</div></div></article>`;
+    out+=`<article class="ev ${past?'past':''}" style="--c:${CATS[c]}"><div class="dt"><small>${new Date(e.date+'T00:00').toLocaleString('en',{month:'short'})}</small><strong>${+e.date.slice(8)}</strong></div>
+    <div class="eb"><div class="meta"><span class="pill">${c}</span>${w?`<span class="pill when">${w}</span>`:''}${full&&!mine?'<span class="pill s-rejected">Full</span>':''}</div>
+    <h3><span aria-hidden="true">${e.em||CEM[c]}</span> ${esc(e.title)}</h3>
+    <p class="info">${IC.clock} ${fmtTime(e.time)} <span class="dot">·</span> ${IC.pin} ${esc(e.venue)}</p><p class="ds">${esc(e.desc)}</p></div>
+    <div class="act"><div class="gc">${n}${e.cap?' / '+e.cap:''} going${e.cap?`<div class="cap"><i style="width:${Math.min(100,n/e.cap*100)}%"></i></div>`:''}</div><div class="row">${past?'':`<button class="btn sm ${mine?'dark':''}" data-rsvp="${e.id}" ${full&&!mine?'disabled':''}>${mine?'Cancel RSVP':full?'Full':'RSVP'}</button>`}<button class="ghost" data-ics="${e.id}" title="Add to your calendar" aria-label="Add to calendar">${IC.dl} Calendar</button>${isAdmin()?`<button class="ghost" data-delev="${e.id}">Delete</button>`:''}</div></div></article>`;
   });
   $('#eventList').innerHTML=out||`<p class="card empty">${selDate?'No events on this date.':'No events match.'} <a href="#events" id="clr">Clear filters</a></p>`;
 }
@@ -236,13 +238,12 @@ $('#eventForm').onsubmit=e=>{
 let segT='';
 function itemCard(i){
   const mine=me&&me.id===i.by,myClaim=me&&claims.find(c=>c.itemId===i.id&&c.by===me.id);
-  const btn=i.status==='returned'?'<span class="pill s-returned">Returned ✓</span>'
+  const btn=i.status==='returned'?'<span class="hint" style="margin:0">Reunited with its owner</span>'
     :mine?'<span class="hint">Your post</span>'
     :myClaim?`<span class="pill s-${myClaim.status}">Claim ${myClaim.status}</span>`
     :`<button class="btn sm" data-claim="${i.id}">${i.type==='Found'?'This is mine':'I found this'}</button>`;
-  return `<article class="tag ${i.type} ${i.status==='returned'?'returned':''}" data-open="${i.id}" tabindex="0" role="button" aria-label="${esc(i.title)}, details"><img src="${pic(i)}" alt="${esc(i.title)}" loading="lazy">
-  <div class="in"><div class="row"><span class="pill" style="background:var(--c)">${i.type}</span><span class="pill loc">📍 ${esc(i.loc)}</span></div><h3>${esc(i.title)}</h3>
-  <p class="hint" style="margin:0">${fmtDate(i.date)} · ${esc(i.cat)}</p><p class="clamp">${esc(i.desc)}</p>
+  return `<article class="tag ${i.type} ${i.status==='returned'?'returned':''}" data-open="${i.id}" tabindex="0" role="button" aria-label="${esc(i.title)}, details"><div class="ph"><img src="${pic(i)}" alt="${esc(i.title)}" loading="lazy"><span class="pill b1" style="background:var(--c)">${i.type}</span>${i.status==='returned'?'<span class="rib">Returned</span>':''}</div>
+  <div class="in"><h3>${esc(i.title)}</h3><p class="info">${IC.pin} ${esc(i.loc)} <span class="dot">·</span> ${fmtDate(i.date)}</p><p class="clamp ds">${esc(i.desc)}</p>
   <div class="foot">${btn}</div></div></article>`;
 }
 function renderItems(){
@@ -275,7 +276,7 @@ function showItem(id){
   <h2>${esc(it.title)}</h2><p style="margin:0">${esc(it.desc)}</p>
   <ul class="tl"><li>${it.type==='Lost'?'Lost':'Found'} on ${fmtDate(it.date)}</li><li>Posted by ${esc(it.byName)}</li><li>${nc} claim${nc===1?'':'s'} so far${it.status==='returned'?' · returned to owner':''}</li></ul>
   ${mt.length?`<div><strong>Possible matches</strong><div class="mt" style="margin-top:8px">${mt.map(m=>`<button data-open="${m.id}"><img src="${pic(m)}" alt=""><span>${esc(m.title)}<br><small>${m.type} · ${esc(m.loc)}</small></span></button>`).join('')}</div></div>`:''}
-  <div class="row">${act}<button class="ghost" data-share="${id}">🔗 Share</button>${mine&&it.status!=='returned'?`<button class="ghost" data-delmine="${id}">Delete</button>`:''}<button class="ghost" data-close>Close</button></div></div>`;
+  <div class="row">${act}<button class="ghost" data-share="${id}">${IC.share} Share</button>${mine&&it.status!=='returned'?`<button class="ghost" data-delmine="${id}">Delete</button>`:''}<button class="ghost" data-close>Close</button></div></div>`;
   if(!$('#viewDlg').open)$('#viewDlg').showModal();$('#viewDlg').scrollTop=0;
 }
 async function share(id){
@@ -360,6 +361,14 @@ $('#admin').onclick=e=>{
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));a.download='campus-hub-data.json';a.click();URL.revokeObjectURL(a.href)}
   if(b.id==='rst'&&confirm('Delete ALL data in this browser and restore the demo data?')){Object.keys(localStorage).filter(k=>k.startsWith('ch_')&&k!=='ch_theme').forEach(k=>localStorage.removeItem(k));location.reload()}
 };
+
+/* ================= Developer info ================= */
+const DEV={name:'Sreya R K',role:'Developer & Designer',github:'',linkedin:'',email:''}; // add your links here
+$('#devBody').innerHTML=`<div class="dav" aria-hidden="true">${esc(DEV.name[0])}</div><h2>${esc(DEV.name)}</h2><span class="pill s-open">${esc(DEV.role)}</span>
+<p>Designed and built Campus Hub end to end: the interface, the calendar and RSVP logic, the lost-and-found claim workflow, and the admin tools.</p>
+<div class="tech"><span class="pill when">HTML5</span><span class="pill when">CSS3</span><span class="pill when">JavaScript</span><span class="pill when">PWA</span></div>
+<div class="links">${DEV.github?`<a class="ghost" href="${esc(DEV.github)}" target="_blank" rel="noopener">GitHub</a>`:''}${DEV.linkedin?`<a class="ghost" href="${esc(DEV.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`:''}${DEV.email?`<a class="ghost" href="mailto:${esc(DEV.email)}">Email</a>`:''}<button class="ghost" data-close>Close</button></div>`;
+$('#devBtn').onclick=()=>$('#devDlg').showModal();
 
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 go(location.hash.slice(1)||'events');
