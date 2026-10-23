@@ -14,14 +14,14 @@
 </head>
 <body>
 <header class="top">
-  <a class="brand" href="#events"><span class="logo">🎓</span>Campus Hub</a>
+  <a class="brand" href="#events"><span class="logo"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c3 2.5 9 2.5 12 0v-4.5"/></svg></span><span class="bt">Campus Hub</span></a>
   <nav id="nav" aria-label="Main">
-    <button data-view="events"><span class="ic">📅</span><span>Events</span></button>
-    <button data-view="items"><span class="ic">🔎</span><span>Lost &amp; Found</span></button>
-    <button data-view="mine" data-auth><span class="ic">👤</span><span>Activity</span><i class="bd" id="bd" hidden></i></button>
-    <button data-view="admin" data-admin><span class="ic">🛡️</span><span>Admin</span></button>
+    <button data-view="events"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><span>Events</span></button>
+    <button data-view="items"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>Lost &amp; Found</span></button>
+    <button data-view="mine" data-auth><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Activity</span><i class="bd" id="bd" hidden></i></button>
+    <button data-view="admin" data-admin><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>Admin</span></button>
   </nav>
-  <div class="right"><button class="icon" id="theme" aria-label="Toggle dark mode">🌙</button><div id="authbox"></div></div>
+  <div class="right"><button class="icon" id="theme" aria-label="Toggle dark mode"></button><div id="authbox"></div></div>
 </header>
 <div id="menu" class="menu" hidden></div>
 
@@ -71,7 +71,9 @@
   <section id="admin" class="view" hidden></section>
 </main>
 
-<button class="fab" id="fab" aria-label="Report an item">＋</button>
+<footer class="sitefoot"><div><strong>Campus Hub</strong>Events and lost-and-found for your campus.</div><div>Designed &amp; developed by <button class="dev" id="devBtn">Sreya R K</button></div></footer>
+
+<button class="fab" id="fab" aria-label="Report an item"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 
 <dialog id="authDlg"><form id="authForm" novalidate>
   <h2 id="authTitle">Log in</h2>
@@ -122,6 +124,8 @@
   <p class="err" id="eventErr" role="alert"></p>
   <div class="row"><button class="btn" type="submit">Publish event</button><button class="ghost" type="button" data-close>Cancel</button></div>
 </form></dialog>
+
+<dialog id="devDlg"><div id="devBody" class="dv"></div></dialog>
 
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
